@@ -27,7 +27,7 @@ public final class DefaultServerRequestLogger implements ServerRequestLogger {
     @Override
     public ServerHttpRequest log(ServerWebExchange exchange) {
         StringBuilder metadata = new StringBuilder("REQUEST: ")
-                .append(exchange.getRequest().getMethodValue())
+                .append(exchange.getRequest().getMethod().name())
                 .append(" ")
                 .append(exchange.getRequest().getURI());
 

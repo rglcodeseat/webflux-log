@@ -42,7 +42,7 @@ public class BaseResponseMessageCreator implements ResponseMessageCreator {
 
         logMessageBuilder
                 .append(timeElapsedProvider.createMessage(responseTimeMillis))
-                .append(httpStatusProvider.createMessage(response.rawStatusCode()));
+                .append(httpStatusProvider.createMessage(response.statusCode().value()));
 
         for (ResponseMetadataMessageFormatter metadataFormatter : metadataFormatters) {
             logMessageBuilder.append(metadataFormatter.formatMessage(response, properties));

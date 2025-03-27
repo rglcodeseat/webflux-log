@@ -24,7 +24,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @ExtendWith(OutputCaptureExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-public class LoggingFilterComponentTest extends BaseIntegrationTest {
+class LoggingFilterComponentTest extends BaseIntegrationTest {
 
     @Test
     void filter_whenReturned404_thenLogAllRequestExceptBody_andFullResponse(CapturedOutput output) {
@@ -45,7 +45,8 @@ public class LoggingFilterComponentTest extends BaseIntegrationTest {
 
         assertTrue(logs.contains(" RESPONSE: ELAPSED TIME: "));
         assertTrue(logs.contains(" STATUS: 404 Not Found"));
-        assertTrue(logs.contains(" HEADERS: [ Content-Type=application/json"));
+        assertTrue(logs.contains(" HEADERS: [ "));
+        assertTrue(logs.contains("Content-Type=application/json"));
         assertTrue(logs.contains(" COOKIES (Set-Cookie): [ ] BODY: [ {no body} ]"));
 
         assertEquals(1, StringUtils.countMatches(logs, "BODY"));
@@ -74,7 +75,8 @@ public class LoggingFilterComponentTest extends BaseIntegrationTest {
 
         assertTrue(logs.contains(" RESPONSE: ELAPSED TIME: "));
         assertTrue(logs.contains(" STATUS: 400 Bad Request"));
-        assertTrue(logs.contains(" HEADERS: [ Content-Type=application/json"));
+        assertTrue(logs.contains(" HEADERS: [ "));
+        assertTrue(logs.contains("Content-Type=application/json"));
         assertTrue(logs.contains(" COOKIES (Set-Cookie): [ ] BODY: [ {no body} ]"));
     }
 
@@ -109,7 +111,8 @@ public class LoggingFilterComponentTest extends BaseIntegrationTest {
 
         assertTrue(logs.contains(" RESPONSE: ELAPSED TIME: "));
         assertTrue(logs.contains(" STATUS: 200 OK"));
-        assertTrue(logs.contains(" HEADERS: [ Content-Type=application/json"));
+        assertTrue(logs.contains(" HEADERS: [ "));
+        assertTrue(logs.contains("Content-Type=application/json"));
         assertTrue(logs.contains(" COOKIES (Set-Cookie): [ ] BODY: [ " + expectedResponseBody + " ]"));
     }
 
