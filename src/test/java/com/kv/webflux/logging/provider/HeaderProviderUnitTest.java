@@ -107,7 +107,7 @@ class HeaderProviderUnitTest extends BaseTest {
         LoggingProperties logProps = LoggingProperties.builder()
                 .logHeaders(true)
                 .maskedHeaders(headerName0)
-                .visibleCharsInMaskedValue(50)
+                .visibleCharsInMaskedValue(5)
                 .build();
 
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
