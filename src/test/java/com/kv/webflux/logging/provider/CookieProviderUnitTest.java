@@ -16,9 +16,12 @@ import org.springframework.util.MultiValueMap;
 
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class CookieProviderUnitTest extends BaseTest {
+class CookieProviderUnitTest extends BaseTest {
 
     private final CookieProvider provider = new CookieProvider();
 
@@ -169,9 +172,17 @@ public class CookieProviderUnitTest extends BaseTest {
                                                           ResponseCookie cookie2, ResponseCookie cookie3,
                                                           MultiValueMap<String, ResponseCookie> cookieMap) {
 
+        ResponseCookie aCookieWithNullValue = ResponseCookie.from(RandomString.make(), "null").build();
+        cookieMap.add(aCookieWithNullValue.getName(), aCookieWithNullValue);
+
         LoggingProperties propsWithMasked = LoggingProperties.builder()
                 .logCookies(true)
-                .maskedCookies(cookie0.getName(), cookie1.getName(), notExistingCookieName)
+                .maskedCookies(
+                        cookie0.getName(),
+                        cookie1.getName(),
+                        aCookieWithNullValue.getName(),
+                        notExistingCookieName
+                )
                 .build();
 
         String actual = provider.createResponseMessage(cookieMap, propsWithMasked);
@@ -189,8 +200,60 @@ public class CookieProviderUnitTest extends BaseTest {
                 () -> assertFalse(actual.contains(cookie2.getName() + "=" + cookie2.getValue())),
                 () -> assertTrue(actual.contains(cookie2.getName() + "=" + LoggingUtils.DEFAULT_MASK)),
 
+                () -> assertTrue(actual.contains(aCookieWithNullValue.getName() + "=" + aCookieWithNullValue.getValue())),
+
                 () -> assertTrue(actual.contains(cookie3.toString())),
                 () -> assertFalse(actual.contains(notExistingCookieName))
+        );
+    }
+
+    @Test
+    void createResponseMessage_whenMasked_thenAddWithMask_withSomeVisibleChars() {
+        ResponseCookie aCookie = ResponseCookie.from(RandomString.make(), RandomString.make()).build();
+        LoggingProperties propsWithMasked = LoggingProperties.builder()
+                .logCookies(true)
+                .maskedCookies(aCookie.getName())
+                .visibleCharsInMaskedValue(5)
+                .build();
+        MultiValueMap<String, ResponseCookie> cookieMap = new LinkedMultiValueMap<>();
+        cookieMap.add(aCookie.getName(), aCookie);
+
+
+        String actual = provider.createResponseMessage(cookieMap, propsWithMasked);
+        log.info(actual);
+
+
+        assertTrue(
+                actual.contains(
+                        aCookie.getName() + "="
+                                + aCookie.getValue().substring(0, propsWithMasked.getVisibleCharsInMaskedValue())
+                                + "..."
+                )
+        );
+    }
+
+    @Test
+    void should_mask_when_defined_visible_chars_is_greater_than_cookie_value_length() {
+        ResponseCookie aCookie = ResponseCookie.from(RandomString.make(), RandomString.make(8)).build();
+        LoggingProperties propsWithMasked = LoggingProperties.builder()
+                .logCookies(true)
+                .maskedCookies(aCookie.getName())
+                .visibleCharsInMaskedValue(10)
+                .build();
+        MultiValueMap<String, ResponseCookie> cookieMap = new LinkedMultiValueMap<>();
+        cookieMap.add(aCookie.getName(), aCookie);
+
+
+        String actual = provider.createResponseMessage(cookieMap, propsWithMasked);
+        log.info(actual);
+
+
+        assertTrue(
+                actual.contains(
+                        aCookie.getName() + "="
+                                + "{value-to-mask-shorter-than-"
+                                + propsWithMasked.getVisibleCharsInMaskedValue() + "}"
+                )
         );
     }
 

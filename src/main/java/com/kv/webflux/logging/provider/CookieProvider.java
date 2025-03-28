@@ -40,7 +40,11 @@ public final class CookieProvider {
 
         return properties.getMaskedCookies() == null
                 ? extractInResponse(cookies)
-                : extractInResponse(setMaskInResponse(cookies, properties.getMaskedCookies()));
+                : extractInResponse(setMaskInResponse(
+                cookies,
+                properties.getMaskedCookies(),
+                properties.getVisibleCharsInMaskedValue()
+        ));
     }
 
 
@@ -60,16 +64,51 @@ public final class CookieProvider {
         return cookiesToLog;
     }
 
-    private Map<String, List<ResponseCookie>> setMaskInResponse(MultiValueMap<String, ResponseCookie> cookies,
-                                                                String[] cookiesToMask) {
-
+    private Map<String, List<ResponseCookie>> setMaskInResponse(
+            MultiValueMap<String, ResponseCookie> cookies,
+            String[] cookiesToMask,
+            Integer visibleChars
+    ) {
         LinkedCaseInsensitiveMap<List<ResponseCookie>> cookiesToLog = toCaseInsensitive(cookies);
-        for (String maskedName : cookiesToMask) {
-            ResponseCookie mask = ResponseCookie.from(maskedName, LoggingUtils.DEFAULT_MASK).build();
-            ProviderUtils.setMaskToValue(cookiesToLog, maskedName, mask);
+
+        for (String cookieToMask : cookiesToMask) {
+            List<ResponseCookie> cookieToLog = cookiesToLog.get(cookieToMask);
+            if (cookieToLog == null || cookieToLog.isEmpty()) {
+                continue;
+            }
+
+            List<ResponseCookie> maskedCookies = cookieToLog.stream()
+                    .map(cookie -> maskResponseCookie(
+                                    cookieToMask,
+                                    cookie,
+                                    visibleChars
+                            )
+                    )
+                    .toList();
+
+            cookiesToLog.put(cookieToMask, maskedCookies);
         }
 
         return cookiesToLog;
+    }
+
+    private ResponseCookie maskResponseCookie(
+            String cookieToMask,
+            ResponseCookie cookie,
+            Integer visibleChars
+    ) {
+        if (cookie.getValue().contains("null")) {
+            return cookie;
+        }
+        if (visibleChars == null) {
+            return ResponseCookie.from(cookieToMask, LoggingUtils.DEFAULT_MASK).build();
+        }
+
+        String maskedValue = "{value-to-mask-shorter-than-" + visibleChars + "}";
+        if (cookie.getValue().length() > visibleChars) {
+            maskedValue = cookie.getValue().substring(0, visibleChars) + "...";
+        }
+        return ResponseCookie.from(cookieToMask, maskedValue).build();
     }
 
     private String extractInClientRequest(Map<String, List<String>> cookies) {

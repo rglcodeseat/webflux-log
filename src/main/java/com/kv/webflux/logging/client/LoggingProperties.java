@@ -3,7 +3,9 @@ package com.kv.webflux.logging.client;
 public final class LoggingProperties {
 
     private final boolean logRequestId;
+
     private final String requestIdPrefix;
+    private final Integer visibleCharsInMaskedValue;
 
     private final boolean logHeaders;
     private final String[] maskedHeaders;
@@ -14,11 +16,16 @@ public final class LoggingProperties {
     private final boolean logBody;
 
 
-    private LoggingProperties(final boolean logHeaders, final String[] maskedHeaders,
-                              final boolean logCookies, final String[] maskedCookies,
-                              final boolean logBody,
-                              final boolean logRequestId, final String requestIdPrefix) {
-
+    private LoggingProperties(
+            final boolean logHeaders,
+            final String[] maskedHeaders,
+            final boolean logCookies,
+            final String[] maskedCookies,
+            final boolean logBody,
+            final boolean logRequestId,
+            final String requestIdPrefix,
+            final Integer visibleCharsInMaskedValue
+    ) {
         this.logHeaders = logHeaders;
         this.maskedHeaders = maskedHeaders;
         this.logCookies = logCookies;
@@ -26,6 +33,7 @@ public final class LoggingProperties {
         this.logBody = logBody;
         this.logRequestId = logRequestId;
         this.requestIdPrefix = requestIdPrefix;
+        this.visibleCharsInMaskedValue = visibleCharsInMaskedValue;
     }
 
 
@@ -62,11 +70,17 @@ public final class LoggingProperties {
         return this.logBody;
     }
 
+    public Integer getVisibleCharsInMaskedValue() {
+        return this.visibleCharsInMaskedValue;
+    }
+
 
     public static class LoggingPropertiesBuilder {
 
         private boolean logRequestId;
         private String requestIdPrefix;
+
+        private Integer visibleCharsInMaskedValue;
 
         private boolean logHeaders;
         private String[] maskedHeaders;
@@ -116,9 +130,14 @@ public final class LoggingProperties {
             return this;
         }
 
+        public LoggingProperties.LoggingPropertiesBuilder visibleCharsInMaskedValue(final Integer visibleCharsInMaskedValue) {
+            this.visibleCharsInMaskedValue = visibleCharsInMaskedValue;
+            return this;
+        }
+
         public LoggingProperties build() {
             return new LoggingProperties(this.logHeaders, this.maskedHeaders, this.logCookies, this.maskedCookies,
-                    this.logBody, this.logRequestId, this.requestIdPrefix);
+                    this.logBody, this.logRequestId, this.requestIdPrefix, this.visibleCharsInMaskedValue);
         }
     }
 }

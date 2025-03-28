@@ -11,7 +11,10 @@ import java.util.Map;
 
 public final class HeaderProvider {
 
-    public String createMessage(MultiValueMap<String, String> headers, LoggingProperties properties) {
+    public String createMessage(
+            MultiValueMap<String, String> headers,
+            LoggingProperties properties
+    ) {
         if (!properties.isLogHeaders()) {
             return LoggingUtils.EMPTY_MESSAGE;
         }
@@ -26,7 +29,11 @@ public final class HeaderProvider {
         if (properties.getMaskedHeaders() == null) {
             extractAll(headersToLog, sb);
         } else {
-            extractAll(setMask(headersToLog, properties.getMaskedHeaders()), sb);
+            extractAll(setMask(
+                    headersToLog,
+                    properties.getMaskedHeaders(),
+                    properties.getVisibleCharsInMaskedValue()
+            ), sb);
         }
 
         return sb.append("]").toString();
@@ -43,7 +50,40 @@ public final class HeaderProvider {
                 .forEach(value -> sb.append(headerName).append("=").append(value).append(" ")));
     }
 
-    private Map<String, List<String>> setMask(LinkedCaseInsensitiveMap<List<String>> headers, String[] headerNames) {
-        return ProviderUtils.setMaskToValues(headers, headerNames, LoggingUtils.DEFAULT_MASK);
+    private Map<String, List<String>> setMask(
+            LinkedCaseInsensitiveMap<List<String>> headers,
+            String[] headersToMask,
+            Integer visibleChars
+    ) {
+        for (String headerToMask : headersToMask) {
+            List<String> headerToLog = headers.get(headerToMask);
+            if (headerToLog == null || headerToLog.isEmpty()) {
+                continue;
+            }
+
+            List<String> maskedHeaders = headerToLog.stream()
+                    .map(header -> maskHeader(header, visibleChars))
+                    .toList();
+
+            headers.put(headerToMask, maskedHeaders);
+        }
+
+        return headers;
+    }
+
+
+    private String maskHeader(String header, Integer visibleChars) {
+        if (header.contains("null")) {
+            return header;
+        }
+        if (visibleChars == null) {
+            return LoggingUtils.DEFAULT_MASK;
+        }
+
+        String maskedValue = "{value-to-mask-shorter-than-" + visibleChars + "}";
+        if (header.length() > visibleChars) {
+            maskedValue = header.substring(0, visibleChars) + "...";
+        }
+        return maskedValue;
     }
 }
